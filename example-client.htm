@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head><title>WebSocket Test</title></head>
+<body>
+<script>
+var ws;
+window.onload = function()
+{
+	ws = new WebSocket("ws://localhost:8080/echo");
+	ws.onmessage = function(event) { console.log(event.data); };
+	ws.onopen = function(event)
+	{
+		for(var i = 0; i < 100; ++i)
+			ws.send("Hello" + i);
+	}
+}
+
+window.onclose=function()
+{
+	ws.close();
+}
+</script>
+</body>
+</html>

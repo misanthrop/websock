@@ -1,0 +1,6 @@
+/example-server
+/*.creator
+/*.user
+/*.config
+/*.files
+/*.includes
