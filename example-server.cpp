@@ -2,6 +2,7 @@
 #include <arpa/inet.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <errno.h>
 #include <unistd.h>
 #include "websock.hpp"
@@ -9,16 +10,29 @@
 struct Socket
 {
 	int fd;
-	explicit Socket(int fd) : fd(fd) {}
+	operator int() const { return fd; }
+
+	Socket() : fd(-1) {}
+	Socket(int fd) : fd(fd) {}
 	Socket(Socket&& o) : fd(o.fd) { o.fd = -1; }
 	Socket(const Socket&) = delete;
 	~Socket() { if(fd >= 0) close(fd); }
-	operator int() const { return fd; }
+
+	Socket& operator=(int f) { if(fd >= 0) close(fd); fd = f; return *this; }
+	Socket& operator=(Socket&& o) { if(fd >= 0) close(fd); fd = o.fd; o.fd = -1; return *this; }
+	Socket& operator=(const Socket&) = delete;
 };
+
+const char* addrToStr(const sockaddr_in& addr)
+{
+	static char result[32];
+	sprintf(result, "%s:%d", inet_ntoa(addr.sin_addr), ntohs(addr.sin_port));
+	return result;
+}
 
 int main()
 {
-	Socket serverSocket(socket(PF_INET, SOCK_STREAM, 0));
+	Socket serverSocket = socket(PF_INET, SOCK_STREAM, 0);
 	if(serverSocket < 0)
 	{
 		perror("socket error");
@@ -43,19 +57,19 @@ int main()
 		return -1;
 	}
 
-	printf("Server started %s\n", inet_ntoa(serverAddr.sin_addr));
+	printf("Server started %s\n", addrToStr(serverAddr));
 	fflush(stdout);
 
 	sockaddr_in clientAddr;
 	socklen_t clientAddrLen = sizeof(clientAddr);
-	Socket clientSocket(accept(serverSocket, (struct sockaddr*)&clientAddr, &clientAddrLen));
+	Socket clientSocket = accept(serverSocket, (struct sockaddr*)&clientAddr, &clientAddrLen);
 	if(clientSocket < 0)
 	{
 		perror("accept failed");
 		return -1;
 	}
 
-	printf("client %s connected\n", inet_ntoa(clientAddr.sin_addr));
+	printf("[%s] connected\n", addrToStr(clientAddr));
 	fflush(stdout);
 
 	websock::Connection ws;
@@ -64,21 +78,24 @@ int main()
 
 	ws.onMessage = [&](const websock::Message& msg)
 	{
+		printf("[%s] said: ", addrToStr(clientAddr));
 		fwrite(msg.data, 1, msg.len, stdout);
 		printf("\n");
 		fflush(stdout);
-		ws.send(msg.data, msg.len, msg.opcode);
+		ws.send(msg.data, msg.len, msg.opcode); // echo
 	};
 
-	ws.onClose = [&](const websock::Message&)
+	ws.onClose = [&](const websock::Message& msg)
 	{
-		printf("client %s disconnected\n", inet_ntoa(clientAddr.sin_addr));
+		printf("[%s] disconnected: ", addrToStr(clientAddr));
+		fwrite(msg.data, 1, msg.len, stdout);
+		printf("\n");
 		fflush(stdout);
 	};
 
 	ws.onError = [&](websock::Error error)
 	{
-		fprintf(stderr, "client %s error: %s", inet_ntoa(clientAddr.sin_addr), websock::ErrorText[error]);
+		fprintf(stderr, "[%s] error: %s\n", addrToStr(clientAddr), websock::ErrorText[error]);
 		fflush(stderr);
 	};
 
