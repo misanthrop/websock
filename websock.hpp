@@ -103,7 +103,7 @@ namespace websock
 			}
 		}
 
-		void writePending()
+		void flush()
 		{
 			if(!connected || !out.size()) return;
 			ptrdiff_t sent = write(out.begin(), out.size());

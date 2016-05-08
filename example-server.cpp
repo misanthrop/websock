@@ -102,7 +102,7 @@ int main()
 	while(ws.connected)
 	{
 		ws.process();
-		ws.writePending();
+		ws.flush();
 	}
 
 	return 0;
