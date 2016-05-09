@@ -45,15 +45,22 @@ namespace websock
 
 		std::function<void(const Handshake&)> onConnect;
 		std::function<void(const Message&)> onMessage;
-		std::function<void(const Message&)> onClose;
 		std::function<void(Error)> onError;
+		std::function<void()> onClose;
 
 		Connection(size_t maxMsgLen = 2048) : in(maxMsgLen), out(maxMsgLen) {}
+
+		void close()
+		{
+			if(!connected) return;
+			if(onClose) onClose();
+			connected = false;
+		}
 
 		void error(Error code)
 		{
 			if(onError) onError(code);
-			connected = false;
+			close();
 		}
 
 		void process()
@@ -94,9 +101,7 @@ namespace websock
 						send(msg.data, msg.len, websock_opcode_pong);
 						break;
 					case websock_opcode_close:
-						connected = false;
-						if(onClose) onClose(msg);
-						break;
+						return close();
 					default:
 						if(onMessage) onMessage(msg);
 				}
