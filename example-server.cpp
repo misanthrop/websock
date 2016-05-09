@@ -85,10 +85,9 @@ int main()
 		ws.send(msg.data, msg.len, msg.opcode); // echo
 	};
 
-	ws.onClose = [&](const websock::Message& msg)
+	ws.onClose = [&]()
 	{
 		printf("[%s] disconnected: ", addrToStr(clientAddr));
-		fwrite(msg.data, 1, msg.len, stdout);
 		printf("\n");
 		fflush(stdout);
 	};
