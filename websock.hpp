@@ -1,12 +1,17 @@
-#ifndef WEBSOCKET_HPP
-#define WEBSOCKET_HPP
+#ifndef WEBSOCK_HPP
+#define WEBSOCK_HPP
 
+#ifndef WEBSOCK_NO_STL
 #include <functional>
+#endif
 #include "buffer.h"
 #include "websock.h"
 
 namespace websock
 {
+	#ifndef WEBSOCK_NO_STL
+	template<class t> using function = std::function<t>;
+	#endif
 	using Handshake = websock_handshake;
 	using Message = websock_message;
 
@@ -38,15 +43,15 @@ namespace websock
 		bool allowUnmasked = false;
 
 		/// should return the number of bytes read, -1 on error and 0 on disconnect (like POSIX recv)
-		std::function<ptrdiff_t(char*, size_t)> read;
+		function<ptrdiff_t(char*, size_t)> read;
 
 		/// should return the number of bytes sent and -1 on error (like POSIX send)
-		std::function<ptrdiff_t(const char*, size_t)> write;
+		function<ptrdiff_t(const char*, size_t)> write;
 
-		std::function<void(const Handshake&)> onConnect;
-		std::function<void(const Message&)> onMessage;
-		std::function<void(Error)> onError;
-		std::function<void()> onClose;
+		function<void(const Handshake&)> onConnect;
+		function<void(const Message&)> onMessage;
+		function<void(Error)> onError;
+		function<void()> onClose;
 
 		Connection(size_t maxMsgLen = 2048) : in(maxMsgLen), out(maxMsgLen) {}
 
