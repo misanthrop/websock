@@ -124,7 +124,7 @@ namespace websock
 
 		void send(const char* data, size_t len, uint8_t opcode = websock_opcode_binary)
 		{
-			out.reserve(len);
+			out.reserve(len + 8);
 			out.setEnd(websocket_write_message(out.end(), data, len, opcode | websock_final_mask));
 		}
 	};
