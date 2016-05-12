@@ -109,8 +109,18 @@ size_t websocket_parse_handshake(char* __restrict data, size_t data_len, websock
 		return 0;
 	end += 4;
 
+	if(memcmp(data, "GET ", 4))
+		return 0;
+
+	hs->path = data + 4;
+	const char* path_end = (const char*)memchr(hs->path, ' ', end - hs->path);
+	if(!path_end)
+		return 0;
+	hs->path_len = path_end - hs->path;
+	path_end += 1;
+
 	static const char sec_key_property[] = "Sec-WebSocket-Key: ";
-	const char *sec_key = (const char*)memmem(data, end - data, sec_key_property, sizeof sec_key_property - 1);
+	const char *sec_key = (const char*)memmem(path_end, end - path_end, sec_key_property, sizeof sec_key_property - 1);
 	if(!sec_key)
 		return 0;
 	sec_key += sizeof sec_key_property - 1;
