@@ -82,6 +82,7 @@ namespace websock
 				else
 					return error(available ? ReadFailed : UnexpectedDisconnect);
 			}
+			if(!connected) return;
 			if(!established)
 			{
 				Handshake hs;
@@ -92,7 +93,7 @@ namespace websock
 				established = true;
 				if(onConnect) onConnect(hs);
 			}
-			while(1)
+			while(connected)
 			{
 				Message msg;
 				size_t n = websocket_decode_message(in.begin(), in.size(), &msg);
