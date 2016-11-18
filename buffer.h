@@ -146,7 +146,7 @@ struct Buffer
 
 	size_t dataLen() const { return buffer_data_len(&buf); }
 	size_t size() const { return buffer_pending_len(&buf); }
-	bool empty() const { return size(); }
+	bool empty() const { return !size(); }
 	void clear() { buffer_clear(&buf); }
 
 	size_t spaceLeft() const { return buffer_space_left(&buf); }
